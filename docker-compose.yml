@@ -1,0 +1,5 @@
+services:
+    diet-analysis:
+        build: .
+        image: diet-analysis:latest
+        container_name: diet-analysis
