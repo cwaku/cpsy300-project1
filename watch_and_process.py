@@ -20,7 +20,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
-import time
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-from lambda_function import process_nutritional_data_from_azurite
