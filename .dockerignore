@@ -1,7 +1,7 @@
-  venv/
-  __pycache__/
-  *.pyc
-  *.png
-  processed_diets.csv
-  simulated_nosql/
-  .git/
+venv/
+__pycache__/
+*.pyc
+*.png
+processed_diets.csv
+simulated_nosql/
+.git/
