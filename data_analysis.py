@@ -25,7 +25,7 @@ numeric_columns = ["Protein(g)", "Carbs(g)", "Fat(g)"]
 for col in numeric_columns:
     if df[col].isnull().any():
         mean_value = df[col].mean()
-        df[col].fillna(mean_value, inplace=True)
+        df[col] = df [col].fillna(mean_value)
         print(f"Filled {col} missing values with mean: {mean_value:.2f}")
 
 print("\nMissing values after cleaning:")
@@ -57,8 +57,15 @@ print("=" * 50)
 highest_protein_diet = avg_macros["Protein(g)"].idxmax()
 highest_protein_value = avg_macros["Protein(g)"].max()
 
-print(f"Highest protein diet: {highest_protein_diet}")
+highest_protein_recipe = df.loc[df["Protein(g)"].idxmax()]
+
+print(f"Highest-average protein diet: {highest_protein_diet}")
 print(f"Average protein: {highest_protein_value:.2f}g")
+print(
+    f"Single highest-protein recipe: {highest_protein_recipe['Recipe_name']} "
+    f"({highest_protein_recipe['Diet_type']}) - "
+    f"{highest_protein_recipe['Protein(g)']:.2f}g protein"
+)
 
 print("\n" + "=" * 50)
 print("ANALYSIS 4: Most Common Cuisines per Diet Type")
@@ -97,6 +104,8 @@ plt.figure()
 sns.barplot(
     x=avg_macros.index,
     y=avg_macros["Protein(g)"],
+    hue=avg_macros.index,
+    legend=False,
     palette="viridis"
 )
 plt.title(f"Average Protein by Diet Type - {datetime.now().strftime('%Y-%m-%d %H:%M')}")
@@ -146,11 +155,11 @@ sns.scatterplot(
     data=top_protein,
     x="Protein(g)",
     y="Carbs(g)",
-    hue="Diet_type",
+    hue="Cuisine_type",
+    style="Diet_type",
     size="Fat(g)",
     sizes=(50, 400),
     alpha=0.7,
-    palette="tab10",
 )
 plt.title(f"Top Protein Recipes Distribution - {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 plt.tight_layout()
