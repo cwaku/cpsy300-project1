@@ -22,11 +22,19 @@ jobs:
           python -m py_compile lambda_function.py watch_and_process.py
           python data_analysis.py
 
-      - name: Build Docker image
-        run: docker build -t diet-analysis .
+      - name: Build Docker images
+        run: |
+          docker build -t diet-analysis .
+          docker build --target function -t diet-function .
+
+      - name: Report image sizes
+        run: docker image ls diet-analysis diet-function
 
       - name: Run Docker image
         run: docker run --rm diet-analysis
+
+      - name: Check function image starts
+        run: docker run --rm diet-function python -c "import lambda_function; print('function image OK')"
 
       - name: Check Docker Hub secrets
         if: github.event_name == 'push'
