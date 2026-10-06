@@ -1,5 +1,44 @@
+# Task 2: `docker compose up` builds the image and runs the data analysis.
+# Task 3: `docker compose --profile serverless up` also starts the Azurite
+#         Blob Storage emulator and runs the simulated serverless function
+#         against it (upload data/All_Diets.csv to the "datasets" container first).
 services:
     diet-analysis:
         build: .
         image: diet-analysis:latest
         container_name: diet-analysis
+        volumes:
+            # Bind-mount the project so the charts, processed_diets.csv and
+            # simulated_nosql/ written inside the container land on the host.
+            - .:/app
+
+    azurite:
+        image: mcr.microsoft.com/azure-storage/azurite
+        container_name: azurite
+        profiles: ["serverless"]
+        ports:
+            - "10000:10000"   # Blob
+            - "10001:10001"   # Queue
+            - "10002:10002"   # Table
+        volumes:
+            - azurite-data:/data
+        # Same defaults as the image, plus --skipApiVersionCheck so newer SDK
+        # releases are not rejected by the emulator.
+        command: azurite -l /data --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --skipApiVersionCheck
+
+    serverless-function:
+        image: diet-analysis:latest
+        container_name: serverless-function
+        profiles: ["serverless"]
+        depends_on:
+            - azurite
+        environment:
+            # Same well-known Azurite dev account, but reached via the compose
+            # service name instead of 127.0.0.1.
+            AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;"
+        volumes:
+            - .:/app
+        command: ["python", "lambda_function.py"]
+
+volumes:
+    azurite-data:
