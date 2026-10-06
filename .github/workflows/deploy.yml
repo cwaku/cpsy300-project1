@@ -28,7 +28,7 @@ jobs:
           docker build --target function -t diet-function .
 
       - name: Report image sizes
-        run: docker image ls diet-analysis diet-function
+        run: docker image ls diet-analysis diet-function .
 
       - name: Run Docker image
         run: docker run --rm diet-analysis
