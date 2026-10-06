@@ -10,6 +10,12 @@ from datetime import datetime
 CONN = os.environ.get("AZURE_STORAGE_CONNECTION_STRING", "UseDevelopmentStorage=true")
 CONTAINER, BLOB = "datasets", "All_Diets.csv"
 
+# Only these columns are needed for the per-diet averages. Reading just them
+# (and loading Diet_type as a category) cuts parse time and dataframe memory
+# compared with loading all eight columns as strings/floats.
+NUMERIC_COLS = ["Protein(g)", "Carbs(g)", "Fat(g)"]
+USE_COLS = ["Diet_type"] + NUMERIC_COLS
+
 # azure-storage-blob 12.31 defaults to REST API version 2026-10-06, which the
 # current Azurite release (3.37) rejects with "API version ... is not supported".
 # Pin the newest version Azurite understands so the function works whether
@@ -31,14 +37,19 @@ def process_nutritional_data_from_azurite():
 
     print(f"Downloading {BLOB} from Azurite container '{CONTAINER}'...")
     stream = blob_client.download_blob().readall()
-    df = pd.read_csv(io.BytesIO(stream))
+    df = pd.read_csv(
+        io.BytesIO(stream),
+        usecols=USE_COLS,
+        dtype={"Diet_type": "category"},
+    )
     print(f"Loaded {len(df)} rows from blob storage")
 
-    numeric_cols = ["Protein(g)", "Carbs(g)", "Fat(g)"]
-    for col in numeric_cols:
-        df[col] = df[col].fillna(df[col].mean())
+    # Fill missing macronutrients with the column mean in one vectorised step
+    df[NUMERIC_COLS] = df[NUMERIC_COLS].fillna(df[NUMERIC_COLS].mean())
 
-    avg_macros = df.groupby("Diet_type")[numeric_cols].mean().round(2)
+    avg_macros = (
+        df.groupby("Diet_type", observed=True)[NUMERIC_COLS].mean().round(2)
+    )
     result = avg_macros.reset_index().to_dict(orient="records")
 
     # Save results locally as a JSON document (simulated NoSQL storage)

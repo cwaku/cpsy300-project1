@@ -27,7 +27,10 @@ services:
         command: azurite -l /data --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --skipApiVersionCheck
 
     serverless-function:
-        image: diet-analysis:latest
+        build:
+            context: .
+            target: function
+        image: diet-function:latest
         container_name: serverless-function
         profiles: ["serverless"]
         depends_on:
